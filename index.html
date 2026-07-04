@@ -20,6 +20,16 @@
     --down:#4d9bff; --down-bg:#152538;
     --accent:#e8b64a;
   }
+  body.light{
+    --bg:#f4f6f9; --panel:#ffffff; --panel2:#eef1f5; --line:#d8dde3;
+    --txt:#1a1f26; --dim:#5f6b78; --dim2:#98a2ad;
+    --up:#e23b3b; --up-bg:#fdeaea;
+    --down:#2f6fe0; --down-bg:#e7f0fd;
+    --accent:#b9891f;
+  }
+  body.light .cell.hasmemo{border-color:rgba(0,0,0,.42); box-shadow:0 0 6px rgba(0,0,0,.08);}
+  body.light .cell.hasmemo .memo{color:#111; text-shadow:none;}
+  body.light .cell.today{box-shadow:0 0 7px rgba(185,137,31,.28);}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;}
   body{
@@ -128,7 +138,9 @@
   .backup button{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:10px 14px;border-radius:11px;font-size:13px;cursor:pointer;}
   .backup button:active{background:var(--panel2);}
   #fileImport{display:none;}
-  #btnEvents{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--accent);padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:22px;}
+  #btnEvents{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--accent);padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;}
+  #btnSettings{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;margin-top:22px;}
+  #btnSettings:active,#btnEvents:active{background:var(--panel2);}
   #btnEvents:active{background:var(--panel2);}
   .evform{margin-bottom:12px;}
   .evform input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:11px;color:var(--txt);font-size:15px;padding:12px 14px;outline:none;margin-bottom:8px;}
@@ -193,12 +205,13 @@
 
 <div class="section-sep"></div>
 <div class="backup">
-  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v18</span></div>
+  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v19</span></div>
   <div class="row">
     <button id="btnExport">백업 내보내기</button>
     <button id="btnImportTrig">백업 불러오기</button>
     <input type="file" id="fileImport" accept="application/json,.json">
   </div>
+  <button id="btnSettings">⚙️ 설정</button>
   <button id="btnEvents">🎂 매년 반복 기념일 관리</button>
 </div>
 
@@ -246,6 +259,17 @@
   <div class="sbtns"><button class="b-cancel" id="evClose" style="flex:1;">닫기</button></div>
 </div>
 
+<div class="sheet" id="setSheet">
+  <div class="grip"></div>
+  <div class="sdate">⚙️ 설정</div>
+  <div class="slunar">외관</div>
+  <div class="signtoggle" style="margin-bottom:16px;">
+    <button id="setDark" class="plus">🌙 다크모드</button>
+    <button id="setLight" class="minus">☀️ 라이트모드</button>
+  </div>
+  <div class="sbtns"><button class="b-cancel" id="setClose" style="flex:1;">닫기</button></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -256,6 +280,8 @@ var data=loadData();
 var events=loadEvents();
 var evType="solar";
 var showAmount=false;
+var THEMESTORE="tradeMemoTheme_v1";
+var theme=loadTheme();
 var view=new Date();
 var curYear=new Date().getFullYear();
 var selKey=null;
@@ -690,6 +716,19 @@ function addEvent(){
   setTimeout(function(){evAdding=false;},300);
 }
 
+/* ===== 설정: 외관(라이트/다크) ===== */
+function loadTheme(){try{return localStorage.getItem(THEMESTORE)==="light"?"light":"dark";}catch(e){return "dark";}}
+function applyTheme(t){
+  theme=(t==="light")?"light":"dark";
+  document.body.classList.toggle("light",theme==="light");
+  var meta=document.querySelector('meta[name="theme-color"]'); if(meta)meta.setAttribute("content",theme==="light"?"#f4f6f9":"#0e1116");
+  try{localStorage.setItem(THEMESTORE,theme);}catch(e){}
+  el("setDark").classList.toggle("on",theme==="dark");
+  el("setLight").classList.toggle("on",theme==="light");
+}
+function openSettings(){el("setDark").classList.toggle("on",theme==="dark");el("setLight").classList.toggle("on",theme==="light");el("backdrop").classList.add("on");el("setSheet").classList.add("on");}
+function closeSettings(){el("backdrop").classList.remove("on");el("setSheet").classList.remove("on");}
+
 /* ===== toast ===== */
 var toastTimer;
 function toast(msg){var t=el("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.classList.remove("on");},1900);}
@@ -707,7 +746,11 @@ el("btnSave").onclick=doSave;
 el("btnDelete").onclick=doDelete;
 el("btnCancel").onclick=closeSheet;
 el("btnAlarm").onclick=addAlarm;
-el("backdrop").onclick=function(){closeSheet();closeEvents();};
+el("backdrop").onclick=function(){closeSheet();closeEvents();closeSettings();};
+el("btnSettings").onclick=openSettings;
+el("setDark").onclick=function(){applyTheme("dark");};
+el("setLight").onclick=function(){applyTheme("light");};
+el("setClose").onclick=closeSettings;
 el("btnEvents").onclick=openEvents;
 el("evSolar").onclick=function(){setEvType("solar");};
 el("evLunar").onclick=function(){setEvType("lunar");};
@@ -738,6 +781,7 @@ el("msum").onclick=function(){showAmount=!showAmount;renderCal();};
   },{passive:true});
 })();
 
+applyTheme(theme);
 renderCal();
 </script>
 </body>
