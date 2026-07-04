@@ -312,8 +312,9 @@ function fmt(n){var s=Math.abs(n).toLocaleString("ko-KR",{maximumFractionDigits:
 function fmtShort(n){
   var a=Math.abs(n), sign=n>0?"+":n<0?"-":"";
   if(a<10000) return sign + a.toLocaleString("ko-KR",{maximumFractionDigits:2});
-  if(a<100000000){ var man=a/10000; var s=(man<100 && man%1!==0)?man.toFixed(1):Math.round(man).toString(); return sign+s+"만"; }
-  var eok=a/100000000; var s2=(eok<100 && eok%1!==0)?eok.toFixed(1):Math.round(eok).toString(); return sign+s2+"억";
+  function cut(v){return v<100 ? (Math.floor(v*10)/10).toString() : Math.floor(v).toString();}
+  if(a<100000000) return sign + cut(a/10000) + "만";
+  return sign + cut(a/100000000) + "억";
 }
 function el(id){return document.getElementById(id);}
 function escapeHtml(s){return s.replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
