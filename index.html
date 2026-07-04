@@ -50,17 +50,17 @@
 
   .dow{display:grid; grid-template-columns:repeat(7,1fr); padding:8px 10px 2px; gap:4px;}
   .dow span{text-align:center; font-size:11px; color:var(--dim2);}
-  .dow span.sun{color:#c96;} .dow span.sat{color:#69c;}
+  .dow span.sun{color:var(--up);} .dow span.sat{color:#69c;}
 
   .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; padding:0 10px 12px;}
   .cell{min-height:70px; background:var(--panel); border:1px solid transparent; border-radius:10px; padding:5px 4px 4px; cursor:pointer; display:flex; flex-direction:column; overflow:hidden;}
   .cell.empty{background:transparent; cursor:default;}
   .cell:active:not(.empty){border-color:var(--accent);}
-  .cell.today{border-color:var(--dim);}
   .cell.hasmemo{border-color:rgba(255,255,255,.5); box-shadow:0 0 7px rgba(255,255,255,.14);}
   .cell.hasmemo .memo{color:#fff; text-shadow:0 0 7px rgba(255,255,255,.55);}
+  .cell.today{border-color:var(--accent); box-shadow:0 0 7px rgba(232,182,74,.25);}
   .cell .d{font-size:12px; color:var(--dim); line-height:1;}
-  .cell.sun .d{color:#c96;} .cell.sat .d{color:#69c;}
+  .cell.sun .d{color:var(--up);} .cell.sat .d{color:#69c;}
   .cell.holi .d{color:var(--up); font-weight:700;}
   .cell .hname{font-size:8px; color:var(--up); font-weight:600; line-height:1.15; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .cell .evname{font-size:8px; color:var(--accent); font-weight:600; line-height:1.2; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -191,7 +191,7 @@
 
 <div class="section-sep"></div>
 <div class="backup">
-  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v15</span></div>
+  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v17</span></div>
   <div class="row">
     <button id="btnExport">백업 내보내기</button>
     <button id="btnImportTrig">백업 불러오기</button>
