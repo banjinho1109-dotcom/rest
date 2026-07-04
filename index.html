@@ -57,6 +57,8 @@
   .cell.empty{background:transparent; cursor:default;}
   .cell:active:not(.empty){border-color:var(--accent);}
   .cell.today{border-color:var(--dim);}
+  .cell.hasmemo{border-color:rgba(255,255,255,.5); box-shadow:0 0 7px rgba(255,255,255,.14);}
+  .cell.hasmemo .memo{color:#fff; text-shadow:0 0 7px rgba(255,255,255,.55);}
   .cell .d{font-size:12px; color:var(--dim); line-height:1;}
   .cell.sun .d{color:#c96;} .cell.sat .d{color:#69c;}
   .cell.holi .d{color:var(--up); font-weight:700;}
@@ -189,7 +191,7 @@
 
 <div class="section-sep"></div>
 <div class="backup">
-  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v13</span></div>
+  <div class="hint">데이터는 이 폰에만 저장됩니다.<br>업데이트시 백업을 해주세요. <span style="opacity:.55">v15</span></div>
   <div class="row">
     <button id="btnExport">백업 내보내기</button>
     <button id="btnImportTrig">백업 불러오기</button>
@@ -392,6 +394,7 @@ function renderCal(){
     var c=document.createElement("div");
     c.className="cell"+(dow===0?" sun":dow===6?" sat":"")+(key===tKey?" today":"");
     var rec=data[key];
+    if(rec&&rec.memo)c.className+=" hasmemo";
     var holi=holidayName(y,m+1,d);
     if(holi)c.className+=" holi";
     var html='<div class="d">'+d+'</div>';
@@ -606,12 +609,33 @@ function switchTab(which){
 
 /* ===== 백업 ===== */
 function exportData(){
-  var blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  var payload={v:1, data:data, events:events};
+  var blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
   a.href=url; a.download="매매손익백업_"+dateKey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())+".json";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function mergePnl(obj){
+  var n=0;
+  for(var k in obj){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&obj[k]&&typeof obj[k].amount==="number"){
+      data[k]={amount:obj[k].amount,memo:(obj[k].memo||"")+""}; n++;
+    }
+  }
+  return n;
+}
+function mergeEvents(arr){
+  if(!Array.isArray(arr))return 0;
+  var n=0;
+  arr.forEach(function(e){
+    if(e&&typeof e.name==="string"&&(e.type==="solar"||e.type==="lunar")&&e.mo>=1&&e.mo<=12&&e.day>=1&&e.day<=31){
+      var dup=events.some(function(x){return x.name===e.name&&x.type===e.type&&x.mo===e.mo&&x.day===e.day;});
+      if(!dup){events.push({name:e.name,type:e.type,mo:e.mo,day:e.day}); n++;}
+    }
+  });
+  return n;
 }
 function importData(file){
   var fr=new FileReader();
@@ -619,15 +643,15 @@ function importData(file){
     try{
       var obj=JSON.parse(fr.result);
       if(typeof obj!=="object"||obj===null||Array.isArray(obj))throw 0;
-      var ok=0;
-      for(var k in obj){
-        if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&obj[k]&&typeof obj[k].amount==="number"){
-          data[k]={amount:obj[k].amount,memo:(obj[k].memo||"")+""}; ok++;
-        }
+      var pnlN=0, evN=0;
+      if(obj.data&&typeof obj.data==="object"&&!Array.isArray(obj.data)){ // 신형 {data,events}
+        pnlN=mergePnl(obj.data); evN=mergeEvents(obj.events);
+      }else{ // 구형: 평면 손익객체
+        pnlN=mergePnl(obj);
       }
-      if(!ok)throw 0;
-      saveData(); renderCal(); if(el("yearView").style.display!=="none")renderYear();
-      toast(ok+"건 불러옴");
+      if(pnlN===0&&evN===0)throw 0;
+      saveData(); saveEvents(); renderCal(); if(el("yearView").style.display!=="none")renderYear();
+      toast("손익 "+pnlN+"건"+(evN?" · 기념일 "+evN+"건":"")+" 불러옴");
     }catch(e){toast("올바른 백업 파일이 아닙니다");}
   };
   fr.readAsText(file);
